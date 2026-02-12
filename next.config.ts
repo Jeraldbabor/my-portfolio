@@ -8,7 +8,15 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
-  turbopack: {},
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "jfhptrbwpyurtnmtrqnf.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

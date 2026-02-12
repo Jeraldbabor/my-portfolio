@@ -19,7 +19,7 @@ export default async function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-[var(--background)]">
       <header className="max-w-2xl mx-auto px-5 py-6 flex items-center justify-between">
-        <span className="text-sm font-medium">Edit content</span>
+        <span className="text-sm font-medium">Jerald Babor</span>
         <div className="flex items-center gap-5 text-sm">
           <a href="/" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:underline underline-offset-2">
             View site

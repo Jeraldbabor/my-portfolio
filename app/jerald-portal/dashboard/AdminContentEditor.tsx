@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { saveContent } from "./actions";
 import type { PortfolioContent } from "@/lib/types/portfolio";
+import { ImageUpload } from "@/app/components/ImageUpload";
+import { IconTrash } from "@/app/components/Icons";
 
 export default function AdminContentEditor({
   initialContent,
@@ -38,9 +40,7 @@ export default function AdminContentEditor({
   const [socialLinksText, setSocialLinksText] = useState(
     initialContent.socialLinks.map((s) => `${s.name}|${s.url}`).join("\n")
   );
-  const [galleryText, setGalleryText] = useState(
-    initialContent.gallery.images.map((i) => `${i.src}|${i.alt}`).join("\n")
-  );
+  const [galleryItems, setGalleryItems] = useState(initialContent.gallery.images);
 
   async function handleSave(section: keyof PortfolioContent, partial: Partial<PortfolioContent>) {
     setSaving(section);
@@ -87,8 +87,8 @@ export default function AdminContentEditor({
               setContent((c) => ({ ...c, hero: { ...c.hero, tagline: v } }))
             }
           />
-          <Input
-            label="Hero image path"
+          <ImageUpload
+            label="Hero image"
             value={content.hero.image}
             onChange={(v) =>
               setContent((c) => ({ ...c, hero: { ...c.hero, image: v } }))
@@ -550,21 +550,88 @@ export default function AdminContentEditor({
         <p className="text-sm text-zinc-500 mb-2">
           One per line: Image path | Alt text
         </p>
-        <Textarea
-          value={galleryText}
-          onChange={setGalleryText}
-        />
+
+        <div className="mb-4 p-4 border border-blue-100 dark:border-blue-900 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <p className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-2">Upload Helper</p>
+          <ImageUpload
+            label="Upload an image to get a URL"
+            onChange={() => { }} // We don't save this directly, user copies the URL
+            value=""
+          />
+          <p className="text-[10px] text-blue-600 dark:text-blue-400 mt-2">
+            Upload an image above, then copy the URL from the input box and paste it below in the format: <code>URL | Alt Text</code>
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {galleryItems.map((item, index) => (
+            <div key={index} className="flex items-start gap-4 p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900">
+              {/* Preview */}
+              <div className="relative w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-md overflow-hidden shrink-0 border border-zinc-200 dark:border-zinc-700">
+                {item.src ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.src} alt={item.alt} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xs text-zinc-400">No Image</div>
+                )}
+              </div>
+
+              {/* Inputs */}
+              <div className="flex-1 space-y-3">
+                <Input
+                  label="Image URL"
+                  value={item.src}
+                  onChange={(v) => {
+                    const newItems = [...galleryItems];
+                    newItems[index] = { ...newItems[index], src: v };
+                    setGalleryItems(newItems);
+                  }}
+                />
+                <Input
+                  label="Alt Text"
+                  value={item.alt}
+                  onChange={(v) => {
+                    const newItems = [...galleryItems];
+                    newItems[index] = { ...newItems[index], alt: v };
+                    setGalleryItems(newItems);
+                  }}
+                />
+              </div>
+
+              {/* Delete */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm("Remove this image?")) {
+                    const newItems = galleryItems.filter((_, i) => i !== index);
+                    setGalleryItems(newItems);
+                  }
+                }}
+                className="p-2 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                title="Remove image"
+              >
+                <IconTrash className="w-5 h-5" />
+              </button>
+            </div>
+          ))}
+
+          {/* Add New */}
+          <div className="p-4 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-900/50">
+            <h3 className="text-xs font-medium text-zinc-500 mb-3">Add New Image</h3>
+            <ImageUpload
+              label="Upload Image"
+              value=""
+              onChange={(url) => {
+                setGalleryItems([...galleryItems, { src: url, alt: "" }]);
+              }}
+            />
+          </div>
+        </div>
+
         <SaveBtn
           saving={saving === "gallery"}
           onSave={() => {
-            const images = galleryText
-              .split("\n")
-              .map((line) => {
-                const [src = "", alt = ""] = line.split("|");
-                return { src: src.trim(), alt: alt.trim() };
-              })
-              .filter((i) => i.src || i.alt);
-            handleSave("gallery", { gallery: { ...content.gallery, images } });
+            handleSave("gallery", { gallery: { ...content.gallery, images: galleryItems } });
           }}
         />
       </Section>

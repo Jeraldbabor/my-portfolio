@@ -7,13 +7,14 @@ export function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     setMounted(true);
-    const stored = (typeof localStorage !== "undefined" && localStorage.getItem("theme")) as "light" | "dark" | null;
+    const stored = typeof localStorage !== "undefined" ? localStorage.getItem("theme") as "light" | "dark" | null : null;
     const prefersDark = typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
     const next = stored || (prefersDark ? "dark" : "light");
     setTheme(next);
-    document.documentElement.classList.toggle("dark", next === "dark");
   }, []);
+
 
   function toggle() {
     const next = theme === "light" ? "dark" : "light";
@@ -21,7 +22,7 @@ export function ThemeToggle() {
     document.documentElement.classList.toggle("dark", next === "dark");
     try {
       localStorage.setItem("theme", next);
-    } catch {}
+    } catch { }
   }
 
   if (!mounted) return null;

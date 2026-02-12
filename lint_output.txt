@@ -1,0 +1,30 @@
+
+C:\Users\jeral\my-portfolio\app\components\ImageUpload.tsx
+  43:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\jeral\my-portfolio\app\components\ThemeToggle.tsx
+  10:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\jeral\my-portfolio\app\components\ThemeToggle.tsx:10:5
+   8 |
+   9 |   useEffect(() => {
+> 10 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  11 |     const stored = (typeof localStorage !== "undefined" && localStorage.getItem("theme")) as "light" | "dark" | null;
+  12 |     const prefersDark = typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  13 |     const next = stored || (prefersDark ? "dark" : "light");  react-hooks/set-state-in-effect
+
+C:\Users\jeral\my-portfolio\app\jerald-portal\dashboard\AdminContentEditor.tsx
+  7:21  warning  'IconPlus' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\jeral\my-portfolio\app\page.tsx
+  1:8  warning  'Image' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 4 problems (2 errors, 2 warnings)
+

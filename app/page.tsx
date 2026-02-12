@@ -1,4 +1,4 @@
-import Image from "next/image";
+
 import Link from "next/link";
 import { getPortfolioContent } from "@/lib/portfolio";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
@@ -130,8 +130,8 @@ export default async function Home() {
                   <li key={i} className="relative pb-4 last:pb-0">
                     <span
                       className={`absolute left-0 w-2.5 h-2.5 rounded-full -translate-x-[calc(0.5rem+3px)] mt-1.5 ${i === 0
-                          ? "bg-zinc-900 dark:bg-zinc-100"
-                          : "border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900"
+                        ? "bg-zinc-900 dark:bg-zinc-100"
+                        : "border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900"
                         }`}
                     />
                     <div className="flex justify-between gap-3">

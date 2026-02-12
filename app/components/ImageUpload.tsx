@@ -40,7 +40,7 @@ export function ImageUpload({
 
             const { data } = supabase.storage.from("portfolio").getPublicUrl(filePath);
             onChange(data.publicUrl);
-        } catch (error: any) {
+        } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             console.error("Error uploading image:", error);
             if (error.message === "Bucket not found") {
                 alert("Error: The 'portfolio' storage bucket does not exist. Please create it in your Supabase dashboard.");

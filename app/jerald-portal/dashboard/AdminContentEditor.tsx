@@ -4,7 +4,7 @@ import { useState } from "react";
 import { saveContent } from "./actions";
 import type { PortfolioContent } from "@/lib/types/portfolio";
 import { ImageUpload } from "@/app/components/ImageUpload";
-import { IconTrash, IconPlus } from "@/app/components/Icons";
+import { IconTrash } from "@/app/components/Icons";
 
 export default function AdminContentEditor({
   initialContent,

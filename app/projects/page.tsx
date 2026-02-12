@@ -1,0 +1,63 @@
+import Link from "next/link";
+import { getPortfolioContent } from "@/lib/portfolio";
+import { ThemeToggle } from "@/app/components/ThemeToggle";
+import { IconBriefcase, IconArrowRight, IconExternalLink } from "@/app/components/Icons";
+
+export default async function ProjectsPage() {
+    const content = await getPortfolioContent();
+    const { projects } = content;
+
+    return (
+        <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+            <main className="max-w-3xl mx-auto px-5 sm:px-6 pt-8 pb-14">
+                {/* Header */}
+                <header className="flex items-center justify-between mb-8">
+                    <Link
+                        href="/"
+                        className="text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors flex items-center gap-2"
+                    >
+                        <IconArrowRight className="w-4 h-4 rotate-180" />
+                        Back to Home
+                    </Link>
+                    <ThemeToggle />
+                </header>
+
+                {/* Title */}
+                <div className="flex items-center gap-3 mb-8">
+                    <div className="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                        <IconBriefcase className="w-6 h-6 text-zinc-500" />
+                    </div>
+                    <h1 className="text-2xl font-bold tracking-tight">Recent Projects</h1>
+                </div>
+
+                {/* Content */}
+                <div className="grid gap-6">
+                    {projects.items.map((project, i) => (
+                        <article
+                            key={i}
+                            className="group relative flex flex-col items-start gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                        >
+                            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                                {project.title}
+                            </h2>
+                            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                {project.description}
+                            </p>
+                            {project.url && (
+                                <a
+                                    href={project.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors"
+                                >
+                                    <IconExternalLink className="w-4 h-4" />
+                                    View Project
+                                </a>
+                            )}
+                        </article>
+                    ))}
+                </div>
+            </main>
+        </div>
+    );
+}

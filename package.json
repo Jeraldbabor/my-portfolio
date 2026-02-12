@@ -3,13 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
+    "dev:clean": "npx rimraf .next && next dev --webpack",
+    "dev:turbo": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:migrate": "npx supabase db push",
+    "db:migrate:status": "npx supabase migration list"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.93.3",
     "next": "16.1.6",
+    "next-auth": "^5.0.0-beta.26",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },

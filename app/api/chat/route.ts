@@ -146,24 +146,31 @@ export async function POST(req: Request) {
           .map(m => `${m.sender === "visitor" ? "User" : "Assistant"}: ${m.message}`)
           .join("\n");
 
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         const prompt = `${SYSTEM_PROMPT}\n\nConversation so far:\n${conversationHistory}\n\nRespond to the user's latest message naturally and helpfully.`;
 
         const result = await model.generateContent(prompt);
-        const aiResponse = result.response.text();
+        const response = result.response;
+        const aiResponse = response.text();
 
         // Save AI response to database
-        if (aiResponse) {
+        if (aiResponse && aiResponse.trim()) {
           await supabase.from("chat_messages").insert({
             session_id: sessionId,
             conversation_id: conversation?.id,
             sender: "admin",
-            message: aiResponse,
+            message: aiResponse.trim(),
           });
         }
       } catch (aiError) {
         console.error("Error generating AI response:", aiError);
-        // Don't fail the request if AI fails
+        // Save a fallback message if AI fails
+        await supabase.from("chat_messages").insert({
+          session_id: sessionId,
+          conversation_id: conversation?.id,
+          sender: "admin",
+          message: "Thanks for your message! Jerald will get back to you soon. In the meantime, feel free to explore the portfolio or schedule a call!",
+        });
       }
     }
 

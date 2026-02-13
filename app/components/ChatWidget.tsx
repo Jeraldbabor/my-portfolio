@@ -191,9 +191,9 @@ export function ChatWidget() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-48px)] rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col">
+        <div className="fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-48px)] max-h-[500px] rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="bg-blue-600 text-white px-4 py-3 flex items-center gap-3">
+          <div className="bg-blue-600 text-white px-4 py-3 flex items-center gap-3 shrink-0">
             <Image
               src="/jerald1.png"
               alt="Jerald Babor"
@@ -220,7 +220,7 @@ export function ChatWidget() {
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 h-[350px] overflow-y-auto p-4 space-y-3 bg-zinc-50 dark:bg-zinc-950">
+          <div className="flex-1 min-h-0 max-h-[320px] overflow-y-auto p-4 space-y-3 bg-zinc-50 dark:bg-zinc-950">
             {!hasStarted ? (
               // Name input screen
               <div className="h-full flex flex-col items-center justify-center text-center px-4">
@@ -333,7 +333,7 @@ export function ChatWidget() {
 
           {/* Input Area */}
           {hasStarted && (
-            <div className="p-3 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="shrink-0 p-3 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800">
               <div className="flex gap-2">
                 <input
                   ref={inputRef}

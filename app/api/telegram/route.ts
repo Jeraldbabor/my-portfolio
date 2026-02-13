@@ -85,13 +85,12 @@ export async function POST(req: Request) {
       if (text.toLowerCase() === "/start" || text.toLowerCase() === "/help") {
         await sendTelegramMessage(
           chatId,
-          "👋 *Portfolio Chat Bot*\n\n" +
+          "👋 Portfolio Chat Bot\n\n" +
             "When visitors send messages from your website, they'll appear here.\n\n" +
-            "*To reply:* Simply reply to any visitor message, and your response will be sent back to them on the website.\n\n" +
-            "*Commands:*\n" +
+            "To reply: Simply reply to any visitor message, and your response will be sent back to them on the website.\n\n" +
+            "Commands:\n" +
             "/chats - View active conversations\n" +
-            "/help - Show this help message",
-          "Markdown"
+            "/help - Show this help message"
         );
         return NextResponse.json({ ok: true });
       }
@@ -108,14 +107,13 @@ export async function POST(req: Request) {
           const list = conversations
             .map(
               (c, i) =>
-                `${i + 1}. *${c.visitor_name || "Anonymous"}*\n   Session: \`${c.session_id}\``
+                `${i + 1}. ${c.visitor_name || "Anonymous"}\n   Session: ${c.session_id}`
             )
             .join("\n\n");
 
           await sendTelegramMessage(
             chatId,
-            `📋 *Recent Conversations*\n\n${list}`,
-            "Markdown"
+            `📋 Recent Conversations\n\n${list}`
           );
         } else {
           await sendTelegramMessage(chatId, "No conversations yet.");

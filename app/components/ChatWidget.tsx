@@ -141,10 +141,18 @@ export function ChatWidget() {
       if (res.ok) {
         // Show typing indicator while waiting for AI response
         setShowTyping(true);
-        // Fetch messages after a short delay to get the AI response
-        setTimeout(async () => {
+        // Poll for the AI reply a few times then give up
+        let attempts = 0;
+        const pollForReply = async () => {
+          attempts++;
           await fetchMessages();
-        }, 1500);
+          if (attempts < 8) {
+            setTimeout(pollForReply, 2000);
+          } else {
+            setShowTyping(false);
+          }
+        };
+        setTimeout(pollForReply, 2000);
       }
     } catch (error) {
       console.error("Failed to send message:", error);

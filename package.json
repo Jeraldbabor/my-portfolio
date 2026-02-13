@@ -13,6 +13,7 @@
     "db:migrate:status": "npx supabase migration list"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.93.3",
     "next": "16.1.6",

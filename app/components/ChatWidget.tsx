@@ -139,11 +139,12 @@ export function ChatWidget() {
       });
 
       if (res.ok) {
-        // Refresh messages to get the actual saved message
-        await fetchMessages();
-        // Show typing indicator for a few seconds
+        // Show typing indicator while waiting for AI response
         setShowTyping(true);
-        setTimeout(() => setShowTyping(false), 3000);
+        // Fetch messages after a short delay to get the AI response
+        setTimeout(async () => {
+          await fetchMessages();
+        }, 1500);
       }
     } catch (error) {
       console.error("Failed to send message:", error);

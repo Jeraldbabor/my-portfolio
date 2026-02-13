@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Create admin client with service role for API routes
 const supabase = createClient(
@@ -9,6 +10,28 @@ const supabase = createClient(
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
+
+// Initialize Gemini AI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+
+const SYSTEM_PROMPT = `You are Jerald Babor's AI assistant on his portfolio website. Jerald is a full-stack software engineer specializing in JavaScript, Python, TypeScript, React, Next.js, and PHP. He works on web applications, mobile apps, SEO, and AI-powered solutions.
+
+Key facts about Jerald:
+- Based in Metro Manila, Philippines
+- Passionate about AI, web development, and helping developers grow
+- Has helped startups and MSMEs streamline their processes through software
+- Built a community of developers sharing knowledge and mentorship
+- Currently focusing on integrating AI tools into modern applications
+
+Your role:
+- Be friendly, professional, and helpful
+- Answer questions about programming, web development, and tech
+- If asked to schedule a call or meeting, suggest they use the "Schedule a Call" button on the website
+- If asked about specific projects or services, provide general info and offer to have Jerald follow up
+- Keep responses concise but informative (2-4 sentences max)
+- If you don't know something specific about Jerald, say you'll have him follow up personally
+
+Always be warm and approachable. Use casual but professional language.`;
 
 // GET - Retrieve messages for a session
 export async function GET(req: Request) {
@@ -103,6 +126,44 @@ export async function POST(req: Request) {
       } catch (telegramError) {
         console.error("Error sending to Telegram:", telegramError);
         // Don't fail the request if Telegram fails
+      }
+    }
+
+    // Generate AI auto-reply (skip for system messages)
+    if (!isSystemMessage && process.env.GEMINI_API_KEY) {
+      try {
+        // Get recent chat history for context
+        const { data: chatHistory } = await supabase
+          .from("chat_messages")
+          .select("sender, message")
+          .eq("session_id", sessionId)
+          .order("created_at", { ascending: true })
+          .limit(10);
+
+        // Build conversation context
+        const conversationHistory = (chatHistory || [])
+          .filter(m => !m.message.startsWith("[New chat started"))
+          .map(m => `${m.sender === "visitor" ? "User" : "Assistant"}: ${m.message}`)
+          .join("\n");
+
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const prompt = `${SYSTEM_PROMPT}\n\nConversation so far:\n${conversationHistory}\n\nRespond to the user's latest message naturally and helpfully.`;
+
+        const result = await model.generateContent(prompt);
+        const aiResponse = result.response.text();
+
+        // Save AI response to database
+        if (aiResponse) {
+          await supabase.from("chat_messages").insert({
+            session_id: sessionId,
+            conversation_id: conversation?.id,
+            sender: "admin",
+            message: aiResponse,
+          });
+        }
+      } catch (aiError) {
+        console.error("Error generating AI response:", aiError);
+        // Don't fail the request if AI fails
       }
     }
 

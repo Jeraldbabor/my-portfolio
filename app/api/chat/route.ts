@@ -105,9 +105,10 @@ export async function POST(req: Request) {
     }
 
     // Send to Telegram admin
+    let telegramStatus = "skipped";
+    let telegramError = null;
+
     if (TELEGRAM_BOT_TOKEN && TELEGRAM_ADMIN_CHAT_ID) {
-      const safeName = (visitorName || "Anonymous").replace(/[_*`\[\]()~>#+=|{}.!-]/g, "\\$&");
-      const safeMessage = message.replace(/[_*`\[\]()~>#+=|{}.!-]/g, "\\$&");
       const telegramMessage = isSystemMessage
         ? `🆕 New Chat Started\n\n👤 From: ${visitorName || "Anonymous"}\n🔑 Session: ${sessionId}`
         : `💬 New Message\n\n👤 From: ${visitorName || "Anonymous"}\n📝 Message: ${message}\n\n🔑 Session: ${sessionId}\n\nReply to this message to respond`;
@@ -127,10 +128,19 @@ export async function POST(req: Request) {
         const telegramData = await telegramRes.json();
         if (!telegramData.ok) {
           console.error("Telegram API error:", telegramData);
+          telegramStatus = "api_error";
+          telegramError = telegramData.description || JSON.stringify(telegramData);
+        } else {
+          telegramStatus = "sent";
         }
-      } catch (telegramError) {
-        console.error("Error sending to Telegram:", telegramError);
+      } catch (err: unknown) {
+        console.error("Error sending to Telegram:", err);
+        telegramStatus = "fetch_error";
+        telegramError = err instanceof Error ? err.message : String(err);
       }
+    } else {
+      telegramStatus = "no_env_vars";
+      telegramError = `BOT_TOKEN=${TELEGRAM_BOT_TOKEN ? "set" : "missing"}, CHAT_ID=${TELEGRAM_ADMIN_CHAT_ID ? "set" : "missing"}`;
     }
 
     // Generate AI auto-reply (skip for system messages)
@@ -190,7 +200,7 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, message: savedMessage });
+    return NextResponse.json({ success: true, message: savedMessage, telegram: { status: telegramStatus, error: telegramError } });
   } catch (error) {
     console.error("Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

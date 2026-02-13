@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
 
 interface Message {
@@ -15,6 +16,7 @@ function generateSessionId(): string {
 }
 
 export function ChatWidget() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -25,6 +27,9 @@ export function ChatWidget() {
   const [showTyping, setShowTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Hide chat widget on admin portal pages
+  const isAdminPortal = pathname?.startsWith("/jerald-portal");
 
   // Initialize session ID from localStorage
   useEffect(() => {
@@ -176,6 +181,11 @@ export function ChatWidget() {
     const date = new Date(dateString);
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
+
+  // Hide chat widget on admin portal pages
+  if (isAdminPortal) {
+    return null;
+  }
 
   return (
     <>

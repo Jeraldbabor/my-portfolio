@@ -106,12 +106,14 @@ export async function POST(req: Request) {
 
     // Send to Telegram admin
     if (TELEGRAM_BOT_TOKEN && TELEGRAM_ADMIN_CHAT_ID) {
+      const safeName = (visitorName || "Anonymous").replace(/[_*`\[\]()~>#+=|{}.!-]/g, "\\$&");
+      const safeMessage = message.replace(/[_*`\[\]()~>#+=|{}.!-]/g, "\\$&");
       const telegramMessage = isSystemMessage
-        ? `🆕 *New Chat Started*\n\n👤 *From:* ${visitorName || "Anonymous"}\n🔑 *Session:* \`${sessionId}\``
-        : `💬 *New Message*\n\n👤 *From:* ${visitorName || "Anonymous"}\n📝 *Message:* ${message}\n\n🔑 *Session:* \`${sessionId}\`\n\n_Reply to this message to respond_`;
+        ? `🆕 New Chat Started\n\n👤 From: ${visitorName || "Anonymous"}\n🔑 Session: ${sessionId}`
+        : `💬 New Message\n\n👤 From: ${visitorName || "Anonymous"}\n📝 Message: ${message}\n\n🔑 Session: ${sessionId}\n\nReply to this message to respond`;
 
       try {
-        await fetch(
+        const telegramRes = await fetch(
           `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
           {
             method: "POST",
@@ -119,13 +121,15 @@ export async function POST(req: Request) {
             body: JSON.stringify({
               chat_id: TELEGRAM_ADMIN_CHAT_ID,
               text: telegramMessage,
-              parse_mode: "Markdown",
             }),
           }
         );
+        const telegramData = await telegramRes.json();
+        if (!telegramData.ok) {
+          console.error("Telegram API error:", telegramData);
+        }
       } catch (telegramError) {
         console.error("Error sending to Telegram:", telegramError);
-        // Don't fail the request if Telegram fails
       }
     }
 

@@ -17,6 +17,11 @@ function extractSessionId(text: string): string | null {
   return match ? match[0] : null;
 }
 
+// Handle GET requests (Telegram may send these)
+export async function GET() {
+  return NextResponse.json({ ok: true, status: "Webhook active" });
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -30,14 +35,26 @@ export async function POST(req: Request) {
     const text = message.text;
     const replyToMessage = message.reply_to_message;
 
+    // Log for debugging
+    console.log("Webhook received:", JSON.stringify({
+      chatId,
+      text,
+      hasReply: !!replyToMessage,
+      replyText: replyToMessage?.text?.substring(0, 50),
+      adminChatId: TELEGRAM_ADMIN_CHAT_ID,
+      chatIdStr: chatId?.toString(),
+      match: chatId?.toString() === TELEGRAM_ADMIN_CHAT_ID,
+    }));
+
     // Check if this is the admin replying to a chat message
-    if (
-      chatId?.toString() === TELEGRAM_ADMIN_CHAT_ID &&
-      replyToMessage?.text &&
-      text
-    ) {
-      // Extract session ID from the original message
+    // Compare as strings, handle both number and string types
+    const isAdmin = String(chatId) === String(TELEGRAM_ADMIN_CHAT_ID);
+
+    if (isAdmin && replyToMessage?.text && text) {
+      // Extract session ID from the original message (works with or without Markdown)
       const sessionId = extractSessionId(replyToMessage.text);
+
+      console.log("Admin reply - sessionId:", sessionId);
 
       if (sessionId) {
         // Save admin's reply to database
@@ -49,12 +66,15 @@ export async function POST(req: Request) {
 
         if (error) {
           console.error("Error saving admin reply:", error);
-          await sendTelegramMessage(chatId, "❌ Failed to save reply to database.");
+          await sendTelegramMessage(chatId, "❌ Failed to save reply to database: " + error.message);
         } else {
           // Confirm the reply was sent
           await sendTelegramMessage(chatId, "✅ Reply sent to visitor!");
         }
 
+        return NextResponse.json({ ok: true });
+      } else {
+        await sendTelegramMessage(chatId, "⚠️ Could not find session ID in the original message. Make sure you're replying to a visitor message.");
         return NextResponse.json({ ok: true });
       }
     }

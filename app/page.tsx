@@ -13,6 +13,7 @@ import {
   IconCheck,
   IconBriefcase,
   IconCog,
+  getSocialIcon,
 } from "@/app/components/Icons";
 
 export default async function Home() {
@@ -313,18 +314,22 @@ export default async function Home() {
                 </div>
               )}
               {socialLinks.length > 0 && (
-                <div className="flex flex-wrap gap-x-4">
-                  {socialLinks.map((item, i) => (
-                    <Link
-                      key={i}
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-zinc-600 dark:text-zinc-400 hover:underline underline-offset-2"
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
+                <div>
+                  <h4 className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-500 mb-8">Social Links</h4>
+                  <div className="flex flex-wrap gap-x-6 gap-y-2">
+                    {socialLinks.map((item, i) => (
+                      <Link
+                        key={i}
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
+                      >
+                        {getSocialIcon(item.name, "w-4 h-4")}
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               )}
             </section>

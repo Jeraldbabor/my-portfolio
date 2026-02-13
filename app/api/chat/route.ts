@@ -130,47 +130,59 @@ export async function POST(req: Request) {
     }
 
     // Generate AI auto-reply (skip for system messages)
-    if (!isSystemMessage && process.env.GEMINI_API_KEY) {
-      try {
-        // Get recent chat history for context
-        const { data: chatHistory } = await supabase
-          .from("chat_messages")
-          .select("sender, message")
-          .eq("session_id", sessionId)
-          .order("created_at", { ascending: true })
-          .limit(10);
+    if (!isSystemMessage) {
+      let aiReplyText = "Thanks for your message! Jerald will get back to you soon. Feel free to explore the portfolio or schedule a call! 😊";
 
-        // Build conversation context
-        const conversationHistory = (chatHistory || [])
-          .filter(m => !m.message.startsWith("[New chat started"))
-          .map(m => `${m.sender === "visitor" ? "User" : "Assistant"}: ${m.message}`)
-          .join("\n");
+      if (process.env.GEMINI_API_KEY) {
+        try {
+          // Get recent chat history for context
+          const { data: chatHistory } = await supabase
+            .from("chat_messages")
+            .select("sender, message")
+            .eq("session_id", sessionId)
+            .order("created_at", { ascending: true })
+            .limit(10);
 
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-        const prompt = `${SYSTEM_PROMPT}\n\nConversation so far:\n${conversationHistory}\n\nRespond to the user's latest message naturally and helpfully.`;
+          // Build conversation context
+          const conversationHistory = (chatHistory || [])
+            .filter(m => !m.message.startsWith("[New chat started"))
+            .map(m => `${m.sender === "visitor" ? "User" : "Assistant"}: ${m.message}`)
+            .join("\n");
 
-        const result = await model.generateContent(prompt);
-        const response = result.response;
-        const aiResponse = response.text();
+          const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+          const prompt = `${SYSTEM_PROMPT}\n\nConversation so far:\n${conversationHistory}\n\nRespond to the user's latest message naturally and helpfully.`;
 
-        // Save AI response to database
-        if (aiResponse && aiResponse.trim()) {
-          await supabase.from("chat_messages").insert({
-            session_id: sessionId,
-            conversation_id: conversation?.id,
-            sender: "admin",
-            message: aiResponse.trim(),
+          // Add timeout to prevent Vercel function timeout
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 8000);
+
+          const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
           });
+          clearTimeout(timeout);
+
+          const response = result.response;
+          const aiResponse = response.text();
+
+          if (aiResponse && aiResponse.trim()) {
+            aiReplyText = aiResponse.trim();
+          }
+        } catch (aiError) {
+          console.error("Error generating AI response:", aiError);
+          // Use fallback message (already set above)
         }
-      } catch (aiError) {
-        console.error("Error generating AI response:", aiError);
-        // Save a fallback message if AI fails
+      }
+
+      // Always save a reply to the database
+      try {
         await supabase.from("chat_messages").insert({
           session_id: sessionId,
           conversation_id: conversation?.id,
           sender: "admin",
-          message: "Thanks for your message! Jerald will get back to you soon. In the meantime, feel free to explore the portfolio or schedule a call!",
+          message: aiReplyText,
         });
+      } catch (dbError) {
+        console.error("Error saving AI reply:", dbError);
       }
     }
 

@@ -131,8 +131,62 @@ export async function POST(req: Request) {
       }
     }
 
-    // Generate AI auto-reply (skip for system messages)
+    // Generate AI auto-reply (skip for system messages and when admin has replied recently)
     if (!isSystemMessage) {
+      // Check if admin (Jerald) has manually replied via Telegram in the last 3 hours.
+      // Strategy: get all recent messages and look for admin messages that DON'T
+      // appear right after a visitor message (AI auto-replies are always paired
+      // immediately after a visitor message in the same request).
+      const THREE_HOURS_AGO = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+      const { data: recentMessages } = await supabase
+        .from("chat_messages")
+        .select("sender, created_at")
+        .eq("session_id", sessionId)
+        .gte("created_at", THREE_HOURS_AGO)
+        .order("created_at", { ascending: true });
+
+      // Detect real admin replies: admin messages where the previous message
+      // was also an admin message (not immediately after a visitor message),
+      // OR where there's a gap of more than 10 seconds from the previous visitor message.
+      let hasRecentAdminReply = false;
+      if (recentMessages && recentMessages.length > 0) {
+        for (let i = 0; i < recentMessages.length; i++) {
+          const msg = recentMessages[i];
+          if (msg.sender !== "admin") continue;
+
+          // Check the previous message
+          const prevMsg = i > 0 ? recentMessages[i - 1] : null;
+
+          if (!prevMsg) {
+            // First message is admin — it's a real reply
+            hasRecentAdminReply = true;
+            break;
+          }
+
+          if (prevMsg.sender === "admin") {
+            // Two admin messages in a row — second one is a real reply
+            hasRecentAdminReply = true;
+            break;
+          }
+
+          // Previous was a visitor message — check timing gap
+          const adminTime = new Date(msg.created_at).getTime();
+          const visitorTime = new Date(prevMsg.created_at).getTime();
+          const gapSeconds = (adminTime - visitorTime) / 1000;
+
+          if (gapSeconds > 10) {
+            // Admin message came >10s after visitor — it's a real Telegram reply
+            hasRecentAdminReply = true;
+            break;
+          }
+        }
+      }
+
+      if (hasRecentAdminReply) {
+        // Admin is actively chatting — don't send AI reply
+        return NextResponse.json({ success: true, message: savedMessage });
+      }
+
       let aiReplyText = "Thanks for your message! Jerald will get back to you soon. Feel free to explore the portfolio or schedule a call! 😊";
 
       if (process.env.GEMINI_API_KEY) {

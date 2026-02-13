@@ -146,7 +146,7 @@ export async function POST(req: Request) {
           .map(m => `${m.sender === "visitor" ? "User" : "Assistant"}: ${m.message}`)
           .join("\n");
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         const prompt = `${SYSTEM_PROMPT}\n\nConversation so far:\n${conversationHistory}\n\nRespond to the user's latest message naturally and helpfully.`;
 
         const result = await model.generateContent(prompt);
